@@ -403,6 +403,10 @@ static __inline void thread_enter(char *name)
 	printf("%s", "RTKTHREAD_enter");
 #endif
 }
+#ifdef PLATFORM_LINUX
+/* ends in kthread_complete_and_exit(); objtool rejects a missing __noreturn */
+__noreturn
+#endif
 void thread_exit(_completion *comp);
 void _rtw_init_completion(_completion *comp);
 void _rtw_wait_for_comp_timeout(_completion *comp);
