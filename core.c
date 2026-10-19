@@ -5398,6 +5398,13 @@ rtl8xxxu_fill_txdesc_v3(struct ieee80211_hw *hw, struct ieee80211_hdr *hdr,
 	u32 rate = 0;
 	u16 seq_number;
 
+	/*
+	 * The MACID selects which TX report entry the hardware updates; without
+	 * it every frame is reported under macid 0 and per-station rate control
+	 * in AP mode never gets feedback.
+	 */
+	tx_desc->txdw1 |= cpu_to_le32(macid & TXDESC32_8188E_MACID_MASK);
+
 	seq_number = IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
 
 	if (ieee80211_is_data(hdr->frame_control)) {

@@ -486,10 +486,12 @@ struct rtl8xxxu_txdesc40 {
 /*
  * Bits 0-7 differ dependent on chip generation. For 8723au bits 5/6 are
  * aggregation enable and break respectively. For 8723bu, bits 0-7 are macid.
+ * For 8188eu, bits 0-5 are macid.
  */
 #define TXDESC_PKT_OFFSET_SZ		0
 #define TXDESC32_AGG_ENABLE		BIT(5)
 #define TXDESC32_AGG_BREAK		BIT(6)
+#define TXDESC32_8188E_MACID_MASK	0x3f
 #define TXDESC40_MACID_SHIFT		0
 #define TXDESC40_MACID_MASK		0x00f0
 #define TXDESC_QUEUE_SHIFT		8
