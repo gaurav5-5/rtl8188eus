@@ -3113,7 +3113,11 @@ exit:
 
 }
 
-static int cfg80211_rtw_set_wiphy_params(struct wiphy *wiphy, u32 changed)
+static int cfg80211_rtw_set_wiphy_params(struct wiphy *wiphy,
+#ifdef RTW_CFG80211_SET_WIPHY_PARAMS_RADIO_IDX
+	int radio_idx,
+#endif
+	u32 changed)
 {
 #if 0
 	struct iwm_priv *iwm = wiphy_to_iwm(wiphy);
@@ -3958,6 +3962,9 @@ static int cfg80211_rtw_set_txpower(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 	struct wireless_dev *wdev,
 #endif
+#ifdef RTW_CFG80211_SET_TX_POWER_RADIO_IDX
+	int radio_idx,
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)) || defined(COMPAT_KERNEL_RELEASE)
 	enum nl80211_tx_power_setting type, int mbm)
 #else
@@ -4017,6 +4024,12 @@ if(type == NL80211_TX_POWER_FIXED) {
 static int cfg80211_rtw_get_txpower(struct wiphy *wiphy,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 	struct wireless_dev *wdev,
+#endif
+#ifdef RTW_CFG80211_GET_TX_POWER_RADIO_IDX
+	int radio_idx,
+#endif
+#ifdef RTW_CFG80211_GET_TX_POWER_LINK_ID
+	unsigned int link_id,
 #endif
 	int *dbm)
 {
@@ -5659,6 +5672,9 @@ static int	cfg80211_rtw_set_channel(struct wiphy *wiphy
 }
 
 static int cfg80211_rtw_set_monitor_channel(struct wiphy *wiphy
+#ifdef RTW_CFG80211_SET_MONITOR_CHANNEL_NETDEV
+	, struct net_device *ndev
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 	, struct cfg80211_chan_def *chandef
 #else

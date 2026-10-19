@@ -26,6 +26,41 @@ ccflags-y += -I$(src)/include -I$(srctree)/$(src)/include
 
 ldflags-y += --strip-debug
 
+########################## cfg80211 API probes ##########################
+# Distro kernels backport cfg80211_ops signature changes without bumping
+# LINUX_VERSION_CODE (e.g. Ubuntu 6.8.0-147 backports the set_monitor_channel
+# net_device argument from 6.13), so a version check alone picks the wrong
+# prototype. Probe the headers actually being built against instead.
+ifneq ($(KERNELRELEASE),)
+RTW_CFG80211_H := $(wildcard $(srctree)/include/net/cfg80211.h)
+ifeq ($(RTW_CFG80211_H),)
+$(warning cfg80211.h not found under $(srctree); cfg80211 API probes skipped)
+else
+# Print one cfg80211_ops member prototype on a single line. The pattern holds
+# no parentheses because make would count them against the $(shell ...) call.
+rtw_cfg80211_op = $(shell sed -n '/\*$(1)\>/,/;/p' $(RTW_CFG80211_H) | tr -s ' \t\n' ' ')
+
+# v6.13: set_monitor_channel() takes the monitor net_device.
+ifneq ($(findstring net_device,$(call rtw_cfg80211_op,set_monitor_channel)),)
+ccflags-y += -DRTW_CFG80211_SET_MONITOR_CHANNEL_NETDEV
+endif
+# v6.14: get_tx_power() takes the MLO link_id.
+ifneq ($(findstring link_id,$(call rtw_cfg80211_op,get_tx_power)),)
+ccflags-y += -DRTW_CFG80211_GET_TX_POWER_LINK_ID
+endif
+# v6.17: per-radio wiphy params and tx power take radio_idx.
+ifneq ($(findstring radio_idx,$(call rtw_cfg80211_op,set_wiphy_params)),)
+ccflags-y += -DRTW_CFG80211_SET_WIPHY_PARAMS_RADIO_IDX
+endif
+ifneq ($(findstring radio_idx,$(call rtw_cfg80211_op,set_tx_power)),)
+ccflags-y += -DRTW_CFG80211_SET_TX_POWER_RADIO_IDX
+endif
+ifneq ($(findstring radio_idx,$(call rtw_cfg80211_op,get_tx_power)),)
+ccflags-y += -DRTW_CFG80211_GET_TX_POWER_RADIO_IDX
+endif
+endif
+endif
+
 CONFIG_AUTOCFG_CP = n
 
 ########################## WIFI IC ############################
