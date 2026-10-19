@@ -1685,6 +1685,12 @@ void rtl8188e_handle_ra_tx_report2(struct rtl8xxxu_priv *priv, struct sk_buff *s
 	if (!priv->vifs[0] || priv->vifs[0]->type == NL80211_IFTYPE_STATION)
 		items = 1;
 
+	/* ra_info has RTL8188E_MAX_MAC_ID_NUM entries; ignore items beyond it */
+	if (items > RTL8188E_MAX_MAC_ID_NUM)
+		items = RTL8188E_MAX_MAC_ID_NUM;
+	if (items == 0)
+		return;
+
 	for (macid = 0; macid < items; macid++) {
 		valid = false;
 		ra = &priv->ra_info[macid];
@@ -1730,6 +1736,8 @@ void rtl8188e_handle_ra_tx_report2(struct rtl8xxxu_priv *priv, struct sk_buff *s
 		rpt += TX_RPT2_ITEM_SIZE;
 	}
 
+	/* REG_TX_REPORT_TIME is device-wide, so track its last value in entry 0 */
+	ra = &priv->ra_info[0];
 	if (min_rpt_time != ra->pre_min_rpt_time) {
 		rtl8xxxu_write16(priv, REG_TX_REPORT_TIME, min_rpt_time);
 		ra->pre_min_rpt_time = min_rpt_time;
