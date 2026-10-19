@@ -7556,6 +7556,13 @@ static int rtl8xxxu_sta_add(struct ieee80211_hw *hw,
 			mutex_unlock(&priv->sta_mutex);
 			return -ENOSPC;
 		}
+		/* Per-macid driver state (8188e ra_info) only has max_macid_num entries */
+		if (priv->fops->max_macid_num &&
+		    sta_info->macid >= priv->fops->max_macid_num) {
+			rtl8xxxu_release_macid(priv, sta_info->macid);
+			mutex_unlock(&priv->sta_mutex);
+			return -ENOSPC;
+		}
 
 		if (priv->rtl_chip == RTL8188E) {
 			max_mac_id = rtl8xxxu_max_acquired_macid(priv);
