@@ -2,7 +2,7 @@
 
 The mainline `rtl8xxxu` driver from Ubuntu's 7.0.0-38 kernel (upstream
 7.0.14) with Georg Müller's RFC v3 series that enables AP mode on the
-RTL8188EU, plus three fixes for that series. Built as an out-of-tree
+RTL8188EU, plus four fixes for that series. Built as an out-of-tree
 module that replaces the in-kernel `rtl8xxxu` through DKMS.
 
 Patches on top of the import:
@@ -14,6 +14,7 @@ Patches on top of the import:
 5. `bound AP station macids by the chip's max_macid_num`
 6. `harden 8188e TX report parsing in AP mode`
 7. `put the macid into 8188e TX descriptors`
+8. `only warn about an invalid TX report item 0 in station mode`
 
 Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?series=1066375
 
@@ -24,10 +25,10 @@ Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?serie
 ## Install
 
     sudo dkms add .
-    sudo dkms install rtl8xxxu-ap/7.0.14-ap2
+    sudo dkms install rtl8xxxu-ap/7.0.14-ap3
 
 DKMS only builds this for 7.0.x kernels (`BUILD_EXCLUSIVE_KERNEL`).
 
 ## Remove
 
-    sudo dkms remove rtl8xxxu-ap/7.0.14-ap2 --all
+    sudo dkms remove rtl8xxxu-ap/7.0.14-ap3 --all
