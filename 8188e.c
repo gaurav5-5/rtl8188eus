@@ -1675,14 +1675,17 @@ void rtl8188e_handle_ra_tx_report2(struct rtl8xxxu_priv *priv, struct sk_buff *s
 	u32 macid;
 	u8 *rpt = skb->data;
 	bool valid;
+	bool station_mode;
 	u16 min_rpt_time = 0x927c;
 
 	dev_dbg(dev, "%s: len: %d items: %d\n", __func__, tx_rpt_len, items);
 
-	/* We only use macid 0, so only the first item is relevant.
-	 * AP mode will use more of them if it's ever implemented.
+	/*
+	 * In station mode only macid 0 (the AP) is used, so only the first item
+	 * is relevant. In AP mode each associated station has its own macid.
 	 */
-	if (!priv->vifs[0] || priv->vifs[0]->type == NL80211_IFTYPE_STATION)
+	station_mode = !priv->vifs[0] || priv->vifs[0]->type == NL80211_IFTYPE_STATION;
+	if (station_mode)
 		items = 1;
 
 	/* ra_info has RTL8188E_MAX_MAC_ID_NUM entries; ignore items beyond it */
@@ -1721,7 +1724,8 @@ void rtl8188e_handle_ra_tx_report2(struct rtl8xxxu_priv *priv, struct sk_buff *s
 				else
 					ra->ra_stage = 0;
 			}
-		} else if (macid == 0) {
+		} else if (macid == 0 && station_mode) {
+			/* in AP mode macid 0 is broadcast/multicast and often idle */
 			dev_warn(dev, "%s: TX report item 0 not valid\n", __func__);
 		}
 
