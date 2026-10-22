@@ -2,7 +2,7 @@
 
 The mainline `rtl8xxxu` driver from Ubuntu's 7.0.0-38 kernel (upstream
 7.0.14) with Georg Müller's RFC v3 series that enables AP mode on the
-RTL8188EU, plus six fixes for that series. Built as an out-of-tree
+RTL8188EU, plus seven fixes for that series. Built as an out-of-tree
 module that replaces the in-kernel `rtl8xxxu` through DKMS.
 
 Patches on top of the import:
@@ -18,6 +18,7 @@ Patches on top of the import:
 9. `wait for the beacon URB before polling BCN_VALID`
 10. `accept PS-Poll frames in AP mode`
 11. `backport to the 6.8 Jetson tegra kernel` (build only)
+12. `fall back to a random MAC address for a blank EFuse`
 
 Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?series=1066375
 
@@ -28,7 +29,7 @@ Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?serie
 ## Install
 
     sudo dkms add .
-    sudo dkms install rtl8xxxu-ap/7.0.14-ap6
+    sudo dkms install rtl8xxxu-ap/7.0.14-ap7
 
 DKMS only builds this for 7.0.x and 6.8.x kernels (`BUILD_EXCLUSIVE_KERNEL`).
 `compat.h` and the `LINUX_VERSION_CODE` guards in `core.c` cover the 6.8
@@ -36,4 +37,4 @@ API (Jetson 6.8.12-tegra); they compile away on 7.0.
 
 ## Remove
 
-    sudo dkms remove rtl8xxxu-ap/7.0.14-ap6 --all
+    sudo dkms remove rtl8xxxu-ap/7.0.14-ap7 --all
