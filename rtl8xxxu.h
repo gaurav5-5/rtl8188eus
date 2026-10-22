@@ -1790,6 +1790,8 @@ struct rtl8xxxu_cfo_tracking {
 #define RTL8XXXU_BC_MC_MACID	0
 #define RTL8XXXU_BC_MC_MACID1	1
 #define RTL8XXXU_MAX_SEC_CAM_NUM	64
+#define RTL8XXXU_BCN_ISSUE_MAX	5
+#define RTL8XXXU_BCN_URB_TIMEOUT_MS	100
 
 struct rtl8xxxu_hw_feature {
 	u8 max_bw;
@@ -1921,6 +1923,9 @@ struct rtl8xxxu_priv {
 	struct work_struct c2hcmd_work;
 	struct sk_buff_head c2hcmd_queue;
 	struct delayed_work update_beacon_work;
+	struct completion bcn_tx_done;
+	struct sk_buff *bcn_skb;
+	int bcn_urb_status;
 	struct rtl8xxxu_btcoex bt_coex;
 	struct rtl8xxxu_ra_report ra_report;
 	struct rtl8xxxu_cfo_tracking cfo_tracking;

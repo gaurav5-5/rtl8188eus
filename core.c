@@ -5186,6 +5186,11 @@ static void rtl8xxxu_tx_complete(struct urb *urb)
 	if (!urb->status)
 		tx_info->flags |= IEEE80211_TX_STAT_ACK;
 
+	if (skb == READ_ONCE(priv->bcn_skb)) {
+		priv->bcn_urb_status = urb->status;
+		complete(&priv->bcn_tx_done);
+	}
+
 	ieee80211_tx_status_irqsafe(hw, skb);
 
 	rtl8xxxu_free_tx_urb(priv, tx_urb);
@@ -5629,8 +5634,16 @@ static void rtl8xxxu_send_beacon_frame(struct ieee80211_hw *hw,
 	struct rtl8xxxu_priv *priv = hw->priv;
 	struct sk_buff *skb = ieee80211_beacon_get(hw, vif, 0);
 	struct device *dev = &priv->udev->dev;
+	unsigned long start = jiffies;
+	unsigned long urb_done = 0;
+	struct sk_buff *bcn;
+	bool valid = false;
+	int issues = 0;
 	int retry;
 	u8 val8;
+
+	if (!skb)
+		return;
 
 	/* BCN_VALID, write 1 to clear, cleared by SW */
 	val8 = rtl8xxxu_read8(priv, REG_TDECTRL + 2);
@@ -5642,19 +5655,49 @@ static void rtl8xxxu_send_beacon_frame(struct ieee80211_hw *hw,
 	val8 &= ~(BIT_SW_BCN_SEL >> 16);
 	rtl8xxxu_write8(priv, REG_DWBCN1_CTRL_8723B + 2, val8);
 
-	if (skb)
-		rtl8xxxu_tx(hw, NULL, skb);
-
-	retry = 100;
-	do {
-		val8 = rtl8xxxu_read8(priv, REG_TDECTRL + 2);
-		if (val8 & (BIT_BCN_VALID >> 16))
+	/*
+	 * The beacon shares its bulk out endpoint with data frames and can
+	 * wait behind them, so wait for its URB before polling BCN_VALID.
+	 * Download it again if the chip still did not take it, like the
+	 * vendor driver's send_beacon() does.
+	 */
+	while (issues < RTL8XXXU_BCN_ISSUE_MAX) {
+		bcn = skb_copy(skb, GFP_KERNEL);
+		if (!bcn)
 			break;
-		usleep_range(10, 20);
-	} while (--retry);
 
-	if (!retry)
-		dev_err(dev, "%s: Failed to read beacon valid bit\n", __func__);
+		reinit_completion(&priv->bcn_tx_done);
+		WRITE_ONCE(priv->bcn_skb, bcn);
+		rtl8xxxu_tx(hw, NULL, bcn);
+		issues++;
+
+		urb_done = wait_for_completion_timeout(&priv->bcn_tx_done,
+						       msecs_to_jiffies(RTL8XXXU_BCN_URB_TIMEOUT_MS));
+
+		retry = 10;
+		do {
+			val8 = rtl8xxxu_read8(priv, REG_TDECTRL + 2);
+			if (val8 & (BIT_BCN_VALID >> 16)) {
+				valid = true;
+				break;
+			}
+			usleep_range(10, 20);
+		} while (--retry);
+
+		if (valid)
+			break;
+	}
+
+	WRITE_ONCE(priv->bcn_skb, NULL);
+	dev_kfree_skb(skb);
+
+	if (!valid)
+		dev_err(dev, "%s: Failed to read beacon valid bit (issues %d, urb done %d, urb status %d, %u ms)\n",
+			__func__, issues, !!urb_done, priv->bcn_urb_status,
+			jiffies_to_msecs(jiffies - start));
+	else if (issues > 1 || jiffies_to_msecs(jiffies - start) > RTL8XXXU_BCN_URB_TIMEOUT_MS)
+		dev_info_ratelimited(dev, "%s: beacon valid after %d issues, %u ms\n",
+				     __func__, issues, jiffies_to_msecs(jiffies - start));
 }
 
 static void rtl8xxxu_update_beacon_work_callback(struct work_struct *work)
@@ -7856,6 +7899,7 @@ static int rtl8xxxu_probe(struct usb_interface *interface,
 	INIT_WORK(&priv->rx_urb_wq, rtl8xxxu_rx_urb_work);
 	INIT_DELAYED_WORK(&priv->ra_watchdog, rtl8xxxu_watchdog_callback);
 	INIT_DELAYED_WORK(&priv->update_beacon_work, rtl8xxxu_update_beacon_work_callback);
+	init_completion(&priv->bcn_tx_done);
 	skb_queue_head_init(&priv->c2hcmd_queue);
 
 	usb_set_intfdata(interface, hw);
