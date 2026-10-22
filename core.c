@@ -7960,6 +7960,17 @@ static int rtl8xxxu_probe(struct usb_interface *interface,
 		goto err_set_intfdata;
 	}
 
+	/*
+	 * Some clone dongles ship with a blank EFuse. mac80211 does not open
+	 * an interface without a valid address, so use a random one, like
+	 * the vendor driver does.
+	 */
+	if (!is_valid_ether_addr(priv->mac_addr)) {
+		dev_warn(&udev->dev, "Invalid MAC %pM in EFuse, using a random one\n",
+			 priv->mac_addr);
+		eth_random_addr(priv->mac_addr);
+	}
+
 	rtl8xxxu_print_chipinfo(priv);
 
 	ret = priv->fops->load_firmware(priv);
