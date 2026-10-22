@@ -7535,6 +7535,12 @@ exit:
 	rtl8xxxu_write16(priv, REG_RXFLTMAP2, 0xffff);
 	rtl8xxxu_write16(priv, REG_RXFLTMAP0, 0xffff);
 
+	/*
+	 * Accept ps-poll, the only control frame AP mode needs. Without it
+	 * power saving stations never get their buffered frames.
+	 */
+	rtl8xxxu_write16(priv, REG_RXFLTMAP1, 0x400);
+
 	rtl8xxxu_write32_mask(priv, REG_OFDM0_XA_AGC_CORE1,
 			      OFDM0_X_AGC_CORE1_IGI_MASK, 0x1e);
 
