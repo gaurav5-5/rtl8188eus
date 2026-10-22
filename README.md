@@ -27,7 +27,9 @@ Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?serie
     sudo dkms add .
     sudo dkms install rtl8xxxu-ap/7.0.14-ap5
 
-DKMS only builds this for 7.0.x kernels (`BUILD_EXCLUSIVE_KERNEL`).
+DKMS only builds this for 7.0.x and 6.8.x kernels (`BUILD_EXCLUSIVE_KERNEL`).
+`compat.h` and the `LINUX_VERSION_CODE` guards in `core.c` cover the 6.8
+API (Jetson 6.8.12-tegra); they compile away on 7.0.
 
 ## Remove
 
