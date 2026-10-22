@@ -25,10 +25,10 @@ Upstream series: https://patchwork.kernel.org/project/linux-wireless/list/?serie
 ## Install
 
     sudo dkms add .
-    sudo dkms install rtl8xxxu-ap/7.0.14-ap4
+    sudo dkms install rtl8xxxu-ap/7.0.14-ap5
 
 DKMS only builds this for 7.0.x kernels (`BUILD_EXCLUSIVE_KERNEL`).
 
 ## Remove
 
-    sudo dkms remove rtl8xxxu-ap/7.0.14-ap4 --all
+    sudo dkms remove rtl8xxxu-ap/7.0.14-ap5 --all
